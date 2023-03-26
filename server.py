@@ -1,66 +1,14 @@
-# import re
-# import string
-# import joblib
-# from nltk.tokenize import word_tokenize
-# from nltk.corpus import stopwords
-# from sklearn.feature_extraction.text import TfidfVectorizer
-#
-# # Load the trained model from file
-# model = joblib.load('hate_speech_model.joblib')
-#
-# # Preprocess the input text by cleaning and tokenizing it
-# def preprocess_text(text):
-#     # Remove URLs, user mentions, and special characters
-#     text = re.sub(r'http\S+', '', text)
-#     text = re.sub(r'@[A-Za-z0-9_]+', '', text)
-#     text = re.sub(r'[^\w\s]', '', text)
-#     # Convert to lowercase
-#     text = text.lower()
-#     # Tokenize the text into words
-#     tokens = word_tokenize(text)
-#     # Remove stop words
-#     stop_words = set(stopwords.words('english'))
-#     tokens = [t for t in tokens if not t in stop_words]
-#     # Return the cleaned tokens as a string
-#     return ' '.join(tokens)
-#
-# # Define a function that takes a string as input and predicts whether it is hate speech or not
-# def predict_hate_speech(text):
-#     # Preprocess the input text
-#     preprocessed_text = preprocess_text(text)
-#     # Predict the label using the trained model
-#     y_pred = model.predict([text])
-#     print(y_pred)
-#     # Return a string indicating whether the input text is hate speech or not
-#     if y_pred == 1:
-#         return 'This is hate speech.'
-#     else:
-#         return 'This is not hate speech.'
-#
-# # Test the function with some example strings
-# print(predict_hate_speech('I hate you!'))
-# print(predict_hate_speech('The sky is blue.'))
-
-
-import pandas as pd
-import numpy as np
+from flask import Flask, render_template, request
+import joblib
 import re
 
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import VotingClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
+app = Flask(__name__)
 
-import joblib
+# load the hate speech detection model from the joblib file
+model = joblib.load('hate_speech_model.joblib')
 
-# Load the data
-data = pd.read_csv('train.csv')
 
-# Define a function to preprocess the input string
+# define a function to preprocess the input text
 def preprocess_text(text):
     # Convert to lowercase
     text = text.lower()
@@ -80,54 +28,34 @@ def preprocess_text(text):
     text = text.strip()
     return text
 
-# Preprocess the data
-data['text'] = data['text'].apply(preprocess_text)
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(data['text'], data['label'], test_size=0.2, random_state=42)
+# define the route for the home page
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-# Define the classifiers
-lr = LogisticRegression(random_state=42)
-nb = MultinomialNB()
-rf = RandomForestClassifier(random_state=42)
 
-# Define the TF-IDF vectorizer
-tfidf_vectorizer = TfidfVectorizer()
+# define the route for the prediction result
+@app.route('/predict', methods=['POST'])
+def predict():
+    # get the input text from the HTML form
+    text = request.form['text']
 
-# Define the voting classifier
-voting_clf = VotingClassifier(
-    estimators=[('lr', lr), ('nb', nb), ('rf', rf)],
-    voting='soft')
+    # preprocess the input text
+    preprocessed_text = preprocess_text(text)
 
-# Define the pipeline
-pipeline = Pipeline([
-    ('tfidf', tfidf_vectorizer),
-    ('voting', voting_clf)
-])
+    # predict whether the input text contains hate speech
+    prediction = model.predict([preprocessed_text])[0]
 
-# Fit the pipeline on the training data
-pipeline.fit(X_train, y_train)
+    # format the prediction as a string
+    if prediction == 0:
+        result = 'Not hate speech'
+    else:
+        result = 'Hate speech'
 
-# Predict on the test data
-y_pred = pipeline.predict(X_test)
+    # render the prediction result on the HTML page
+    return render_template('index.html', prediction_result=result)
 
-# Calculate the accuracy score
-accuracy = accuracy_score(y_test, y_pred)
-print('Accuracy:', accuracy)
 
-# Define a function to predict the label for a given string
-def predict_hate_speech(text):
-    text = preprocess_text(text)
-    label = pipeline.predict([text])[0]
-    return label
-
-# Test the function on a sample string
-text = "I hate people like you"
-label = predict_hate_speech(text)
-print('Text:', text)
-print('Label:', label)
-
-text = "I love you"
-label = predict_hate_speech(text)
-print('Text:', text)
-print('Label:', label)
+if __name__ == '__main__':
+    app.run(debug=True)
