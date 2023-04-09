@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hate Speech Detection</title>
+	<style>
+		h1 {
+			font-size: 36px;
+			font-weight: bold;
+			text-align: center;
+			margin-top: 50px;
+		}
+
+		form {
+			margin-top: 50px;
+			text-align: center;
+		}
+
+		label {
+			font-size: 24px;
+			font-weight: bold;
+			display: block;
+			margin-bottom: 10px;
+		}
+
+		input[type="text"] {
+			font-size: 24px;
+			padding: 5px;
+			width: 500px;
+			border: 2px solid #ccc;
+			border-radius: 5px;
+			margin-bottom: 20px;
+		}
+
+		input[type="submit"] {
+			font-size: 24px;
+			font-weight: bold;
+			padding: 10px 20px;
+			background-color: #4CAF50;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		.result {
+			font-size: 24px;
+			font-weight: bold;
+			margin-top: 50px;
+		}
+		.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+		.result-container {
+margin-top: 50px;
+  width: 500px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background-color: #f1f1f1;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+  max-width: 600px;
+}
+
+.result-header {
+  font-size: 30px;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+}
+
+.result-label {
+  font-size: 20px;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.result-value {
+  font-size: 24px;
+  color: #008080;
+  font-weight: bold;
+}
+
+	</style>
+</head>
+<body>
+	<h1>Hate Speech Detection</h1>
+	<form method="POST" action="{{ url_for('predict') }}">
+		<label for="text">Enter text:</label>
+		<input type="text" id="text" name="text" required>
+		<br>
+		<input type="submit" value="Submit">
+	</form>
+	{% if prediction_result %}
+<!--		<p class="result">Prediction: {{ prediction_result }}</p>-->
+	<div class="container">
+	<div class="result-container" >
+        <div class="result-header">Prediction Result</div>
+        <div class="result-label">Prediction</div>
+        <div class="result-value" id="prediction_result">{{ prediction_result }}</div>
+      </div>
+		</div>
+	{% endif %}
+</body>
+</html>
